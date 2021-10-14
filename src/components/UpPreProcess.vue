@@ -32,9 +32,9 @@
         <div @click="screenshot">截图</div>
       </div>
       <div class="show-pic">
-        <div class="pic-title">截图预览</div>
+        <div class="pic-title">截图预览()</div>
         <div class="pic-list" ref="preview">
-          <div class="pic" v-for="(src) in picList" :key="src">
+          <div class="pic" v-for="(src,index) in picList" :key="src" @contextmenu.prevent="deletePic(index)">
             <div class="pic-wrapper" >
               <img :src="src" class="preview-screenshot" />
             </div>
@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, onUnmounted, onMounted,nextTick } from "vue";
+import { defineComponent, reactive, ref, onUnmounted, onMounted,nextTick,toRaw } from "vue";
 import { message } from "ant-design-vue";
 import "viewerjs/dist/viewer.css";
 import Viewer from "viewerjs";
@@ -108,6 +108,16 @@ const aboutPic = () => {
   const picList = ref([]); //这个是为了存储图片，截图之后把图片添加到这个数组里面
   const preview = ref(null); //这个是为了能够拿到同名ref下的所有img标签
   let gallery;
+
+  const showIndex = ()=>{
+    console.log("前",toRaw(picList.value))
+    picList.value.splice(gallery.index,1);
+    nextTick(()=>{
+      gallery.update()
+    })
+    console.log("后",toRaw(picList.value))
+  }
+
   const screenshot = () => {
     message.success("截图成功");
 
@@ -122,7 +132,13 @@ const aboutPic = () => {
     let imgSrc = capture_canvas.toDataURL("image/png");
     picList.value.push(imgSrc);
     if(picList.value.length===1){
-      gallery = new Viewer(preview.value);
+      gallery = new Viewer(preview.value,{
+        toolbar:{
+          play:{
+            click:showIndex
+          }
+        }
+      });
     }
     
     nextTick(()=>{//需要用nextTick来保证gallery拿到的是v-for渲染完毕的数据。
@@ -131,7 +147,20 @@ const aboutPic = () => {
     })
   };
 
+
+
+  const deletePic = (index)=>{
+    picList.value.splice(index,1);
+    nextTick(()=>{
+      gallery.update();
+    })
+    if(picList.value.length===0){
+      gallery.destroy();
+    }
+  }
+
   return {
+    deletePic,
     preview,
     video,
     picList,
@@ -144,9 +173,12 @@ export default defineComponent({
   props: ["videoList"],
   setup(props) {
     const { videos, videoSrc, getVideo, chooseVideo } = aboutVideo(props);  
-    const { video,picList, screenshot, gallery,preview} = aboutPic();
+    const { video,picList, screenshot, gallery,preview,deletePic} = aboutPic();
 
     onMounted(() => {
+      // console.log("video",videos)
+      // console.log("video.value",videos.value)
+      // console.log("toRaw",toRaw(videos.value))
       for (let i = 0; i < videos.value.length; i++) {
         getCoverPage(i, videos.value);
       }
@@ -158,6 +190,7 @@ export default defineComponent({
 
     return {
       //以下与截图相关
+      deletePic,
       preview,
       video,
       gallery,
@@ -237,10 +270,14 @@ video {
 }
 
 .pic-list {
+  height: 80%;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: flex-start;
+  align-content: flex-start;
+  overflow: scroll;
 }
 
 .pic-list::after {
@@ -251,6 +288,7 @@ video {
 
 .pic {
   width: 33.333%;
+  height: 50px;
   margin-top: 5px;
 }
 .pic-wrapper {
