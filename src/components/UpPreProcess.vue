@@ -21,25 +21,35 @@
     <div class="mid-player">
       <video
         :src="videoSrc"
-        width="200px"
-        height="200px"
+        width="600"
+        height="600"
         controls
         ref="video"
       ></video>
     </div>
     <div class="right-operate">
-      <div class="pause-switch">
-        截图时暂停（用于查看截图）
-        <a-switch v-model:checked="checked"></a-switch>
+      <div class="screenshot-button">
         <div @click="screenshot">截图</div>
+      </div>
+      <div class="show-pic">
+        <div class="pic-title">截图预览</div>
+        <div class="pic-list" ref="preview">
+          <div class="pic" v-for="(src) in picList" :key="src">
+            <div class="pic-wrapper" >
+              <img :src="src" class="preview-screenshot" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { defineComponent, reactive, ref, onUnmounted, onMounted } from "vue";
+import { defineComponent, reactive, ref, onUnmounted, onMounted,nextTick } from "vue";
 import { message } from "ant-design-vue";
+import "viewerjs/dist/viewer.css";
+import Viewer from "viewerjs";
 //获取封面的函数
 const getCoverPage = (index, videos) => {
   let itemParent = videos[index];
@@ -52,6 +62,7 @@ const getCoverPage = (index, videos) => {
   const setCover = () => {
     //当canplay后触发的函数，保证video加载完毕才能读取宽高
     let rawHeight = videoItem.videoHeight;
+
     let rawWidth = videoItem.videoWidth;
     let col_direction = rawHeight > rawWidth;
     let trueHeight, trueWidth, trueX, trueY;
@@ -92,28 +103,48 @@ const aboutVideo = (props) => {
   };
 };
 
+const aboutPic = () => {
+  const video = ref(null); //这个是为了能够获取当正在播放的视频的当前帧
+  const picList = ref([]); //这个是为了存储图片，截图之后把图片添加到这个数组里面
+  const preview = ref(null); //这个是为了能够拿到同名ref下的所有img标签
+  let gallery;
+  const screenshot = () => {
+    message.success("截图成功");
+
+    let pic_height = video.value.videoHeight;
+    let pic_width = video.value.videoWidth;
+
+    let capture_canvas = document.createElement("canvas");
+    capture_canvas.width = pic_width;
+    capture_canvas.height = pic_height;
+    let capture_ctx = capture_canvas.getContext("2d");
+    capture_ctx.drawImage(video.value, 0, 0, pic_width, pic_height);
+    let imgSrc = capture_canvas.toDataURL("image/png");
+    picList.value.push(imgSrc);
+    if(picList.value.length===1){
+      gallery = new Viewer(preview.value);
+    }
+    
+    nextTick(()=>{//需要用nextTick来保证gallery拿到的是v-for渲染完毕的数据。
+    //很奇怪，明明preview里面都已经能看到v-for新渲染出来的img标签，但是不在nextTick里面写update的话就是拿不到
+      gallery.update()
+    })
+  };
+
+  return {
+    preview,
+    video,
+    picList,
+    screenshot,
+    gallery,
+  };
+};
+
 export default defineComponent({
   props: ["videoList"],
   setup(props) {
-    const checked = ref(false);
-    const video = ref();
-    const { videos, videoSrc, getVideo, chooseVideo } = aboutVideo(props);
-
-
-    const screenshot = () => {
-      if (!checked.value) {
-        message.success("截图成功");
-      } else {
-        video.value.pause();
-        //然后这里应该弹出一个modal之类的，来预览截图
-        message.success("截图成功，点击任意处继续");
-      }
-    };
-
-    // const getVideo = (index) => props.videoList[index];//先要获取列表中的所有视频，才能获取每个视频的封面
-    // const chooseVideo = (index) => {//点击了哪个视频
-    //   videoSrc.value = props.videoList[index];
-    // };
+    const { videos, videoSrc, getVideo, chooseVideo } = aboutVideo(props);  
+    const { video,picList, screenshot, gallery,preview} = aboutPic();
 
     onMounted(() => {
       for (let i = 0; i < videos.value.length; i++) {
@@ -126,13 +157,17 @@ export default defineComponent({
     // });
 
     return {
+      //以下与截图相关
+      preview,
       video,
+      gallery,
+      picList,
       screenshot,
-      checked,
+      //以下与左侧列表的视频封面，和正在播放的视频相关
       getVideo,
+      videos,
       chooseVideo,
       videoSrc,
-      videos,
     };
   },
 });
@@ -182,5 +217,54 @@ export default defineComponent({
 video {
   width: 100%;
   height: 100%;
+}
+
+.screenshot-button {
+  width: 100%;
+  height: 20%;
+  border: black 1px solid;
+}
+
+.show-pic {
+  width: 100%;
+  height: 80%;
+}
+
+.pic-title {
+  width: 100%;
+  height: 20%;
+  background-color: pink;
+}
+
+.pic-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pic-list::after {
+  /* 为了让最后一行也能刚好对齐 */
+  content: "";
+  flex: auto;
+}
+
+.pic {
+  width: 33.333%;
+  margin-top: 5px;
+}
+.pic-wrapper {
+  position: relative;
+  left: 5%;
+  width: 90%;
+  height: 50px;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+}
+
+.preview-screenshot {
+  max-width: 100%;
+  max-height: 50px;
 }
 </style>
