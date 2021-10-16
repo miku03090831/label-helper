@@ -34,8 +34,13 @@
       <div class="show-pic">
         <div class="pic-title">截图预览()</div>
         <div class="pic-list" ref="preview">
-          <div class="pic" v-for="(src,index) in picList" :key="src" @contextmenu.prevent="deletePic(index)">
-            <div class="pic-wrapper" >
+          <div
+            class="pic"
+            v-for="(src, index) in picList"
+            :key="src"
+            @contextmenu.prevent="deletePic(index)"
+          >
+            <div class="pic-wrapper">
               <img :src="src" class="preview-screenshot" />
             </div>
           </div>
@@ -46,7 +51,15 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, onUnmounted, onMounted,nextTick,toRaw } from "vue";
+import {
+  defineComponent,
+  reactive,
+  ref,
+  onUnmounted,
+  onMounted,
+  nextTick,
+  toRaw,
+} from "vue";
 import { message } from "ant-design-vue";
 import "viewerjs/dist/viewer.css";
 import Viewer from "viewerjs";
@@ -103,20 +116,20 @@ const aboutVideo = (props) => {
   };
 };
 
-const aboutPic = () => {
+const aboutPic = (context) => {
   const video = ref(null); //这个是为了能够获取当正在播放的视频的当前帧
   const picList = ref([]); //这个是为了存储图片，截图之后把图片添加到这个数组里面
   const preview = ref(null); //这个是为了能够拿到同名ref下的所有img标签
   let gallery;
 
-  const showIndex = ()=>{
-    console.log("前",toRaw(picList.value))
-    picList.value.splice(gallery.index,1);
-    nextTick(()=>{
-      gallery.update()
-    })
-    console.log("后",toRaw(picList.value))
-  }
+  const deleteFullScreen = () => {
+    console.log("前", toRaw(picList.value));
+    picList.value.splice(gallery.index, 1);
+    nextTick(() => {
+      gallery.update();
+    });
+    console.log("后", toRaw(picList.value));
+  };
 
   const screenshot = () => {
     message.success("截图成功");
@@ -131,35 +144,40 @@ const aboutPic = () => {
     capture_ctx.drawImage(video.value, 0, 0, pic_width, pic_height);
     let imgSrc = capture_canvas.toDataURL("image/png");
     picList.value.push(imgSrc);
-    if(picList.value.length===1){
-      gallery = new Viewer(preview.value,{
-        toolbar:{
-          play:{
-            click:showIndex
-          }
-        }
+    if (picList.value.length === 1) {
+      gallery = new Viewer(preview.value, {
+        toolbar: {
+          play: {
+            click: deleteFullScreen,
+          },
+        },
       });
     }
-    
-    nextTick(()=>{//需要用nextTick来保证gallery拿到的是v-for渲染完毕的数据。
-    //很奇怪，明明preview里面都已经能看到v-for新渲染出来的img标签，但是不在nextTick里面写update的话就是拿不到
-      gallery.update()
-    })
+
+    nextTick(() => {
+      //需要用nextTick来保证gallery拿到的是v-for渲染完毕的数据。
+      //很奇怪，明明preview里面都已经能看到v-for新渲染出来的img标签，但是不在nextTick里面写update的话就是拿不到
+      gallery.update();
+    });
   };
 
+  const addScreenShot = () => {
+    console.log("触发了增加");
+    context.emit("testEmit",toRaw(picList.value));
+  };
 
-
-  const deletePic = (index)=>{
-    picList.value.splice(index,1);
-    nextTick(()=>{
+  const deletePic = (index) => {
+    picList.value.splice(index, 1);
+    nextTick(() => {
       gallery.update();
-    })
-    if(picList.value.length===0){
+    });
+    if (picList.value.length === 0) {
       gallery.destroy();
     }
-  }
+  };
 
   return {
+    addScreenShot,
     deletePic,
     preview,
     video,
@@ -171,9 +189,18 @@ const aboutPic = () => {
 
 export default defineComponent({
   props: ["videoList"],
-  setup(props) {
-    const { videos, videoSrc, getVideo, chooseVideo } = aboutVideo(props);  
-    const { video,picList, screenshot, gallery,preview,deletePic} = aboutPic();
+  emits: ["testEmit"],
+  setup(props, context) {
+    const { videos, videoSrc, getVideo, chooseVideo } = aboutVideo(props);
+    const {
+      addScreenShot,
+      video,
+      picList,
+      screenshot,
+      gallery,
+      preview,
+      deletePic,
+    } = aboutPic(context);
 
     onMounted(() => {
       // console.log("video",videos)
@@ -190,6 +217,7 @@ export default defineComponent({
 
     return {
       //以下与截图相关
+      addScreenShot,
       deletePic,
       preview,
       video,

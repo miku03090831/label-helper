@@ -51,11 +51,13 @@
     </div>
   </div>
   <a-modal v-if="visible" v-model:visible="visible" title="手动选取帧" :maskClosable="false" @ok="handleOk" @cancel="handleCancel" width="1000px" :getContainer="()=>$refs.publishRef">
-    <UpPreProcess :videoList="videoList"/>
+    <UpPreProcess :videoList="videoList" ref="upProcess" @testEmit="wuhu"/>
   </a-modal>
 </template>
 
 <script type="text/javascript" >
+import md5 from "js-md5"
+import { message } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons-vue";
 import {Modal} from "ant-design-vue"
 import { createVNode,defineComponent, reactive, ref } from "vue";
@@ -63,8 +65,10 @@ import UpPreProcess from "./UpPreProcess.vue";
 export default defineComponent({
   setup() {
       const visible = ref(false);
+      const upProcess = ref(null)
     const formData = new FormData();
     const videoList = [];
+    let destroyFlag;
     const taskRef = ref(null);
     const taskForm = reactive({
       tags: [],
@@ -98,7 +102,27 @@ export default defineComponent({
 
     const handleOk = ()=>{
       console.log("手动选择完毕")
+      upProcess.value.addScreenShot();
+      // message.success("截图已成功保存");
       visible.value = false;
+    }
+
+    const wuhu = (val)=>{
+
+      for(let base64 of val){
+          let data = window.atob(base64.split(',')[1]);
+          let arr = new Uint8Array(data.length)
+          for(let i=0;i<data.length;i++){
+            arr[i] = data.charCodeAt(i);
+          }
+          let name = md5(base64)
+          console.log(name)
+
+          let blob = new Blob([arr],{type:'image/png'})
+          blob.lastModifiedDate = new Date();
+          blob.name=name+".png"
+          formData.append(name,blob)
+      }
     }
 
     const handleCancel = ()=>{
@@ -106,6 +130,8 @@ export default defineComponent({
       visible.value = false;
     }
     return {
+      wuhu,
+      upProcess,
       handleOk,
       handleCancel,
       visible,
@@ -132,6 +158,7 @@ export default defineComponent({
       for (let i = 0; i < files.length; i++) {
         if(files[i].type.startsWith("image")){
           imagecounts+=1;
+          console.log("图片",files[i])
           this.formData.append(i,files[i])
         }
         else if(files[i].type.startsWith("video")){
