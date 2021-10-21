@@ -7,7 +7,15 @@
       />
       <div class="form-body">
         <a-form name="publish-task" ref="taskRef" :model="taskForm">
-          <a-form-item label="任务标题">
+          <a-form-item
+            label="任务标题"
+            name="title"
+            :rules="{
+              required: true,
+              message: '标题不能为空',
+              trigger: 'blur',
+            }"
+          >
             <a-input v-model:value="taskForm.title"></a-input>
           </a-form-item>
           <div class="setTagTitle">请设置预设分类，便于其他用户标记</div>
@@ -25,7 +33,7 @@
               :rules="{
                 required: true,
                 message: '分类名不能为空',
-                trigger: 'change',
+                trigger: 'blur',
               }"
               :wrapper-col="{ span: 24 }"
             >
@@ -40,12 +48,16 @@
               />
             </a-form-item>
           </div>
-          <a-form-item>
+          <a-form-item class="input-file">
             <input type="file" @change="selectFolder($event)" webkitdirectory />
           </a-form-item>
           <a-form-item>
+            <a-button @click="appendPic" v-show="appendBoolean"
+              >追加截图</a-button
+            >
+          </a-form-item>
+          <a-form-item>
             <a-button type="primary" @click="submitForm">发布任务</a-button>
-            <a-button>追加选择</a-button>
           </a-form-item>
         </a-form>
       </div>
@@ -81,12 +93,25 @@ const aboutSelect = (formData) => {
   const upProcess = ref(null);
   const visible = ref(false);
   const videoList = [];
-  const selectFolder = (e) => {
+  const appendBoolean = ref(false);
+  const clearFormData = () => {
+    const temp = [];
     for (let key of formData.keys()) {
-      formData.delete(key);
+      temp.push(key);
     }
-    videoList.splice(0, videoList.length);
+    temp.forEach((key) => {
+      formData.delete(key);
+    });
+    temp.splice(0, temp.length);
+  };
+  const appendPic = () => {
+    visible.value = true;
+  };
 
+  const selectFolder = (e) => {
+    clearFormData();
+    videoList.splice(0, videoList.length);
+    console.log("清除");
     let files = e.target.files;
     //文件夹名称
     let imagecounts = 0;
@@ -109,34 +134,54 @@ const aboutSelect = (formData) => {
     for (let i in videoList) {
       console.log(videoList[i]);
     }
-    Modal.confirm({
-      title: () => "上传结果",
-      content: () =>
-        createVNode("div", {}, [
-          createVNode("p", {}, `您上传了${imagecounts}个图片文件`),
-          createVNode(
-            "p",
-            {},
-            `${videocounts}个视频文件需要选择一些帧用来标注，您可以手动选择特定帧，或者默认使用按时间均分取出的10帧`
-          ),
-          createVNode(
-            "p",
-            {},
-            `另有${othercounts}个文件无法识别（这些文件的MIME类型不是image或video）`
-          ),
-        ]),
-      maskClosable: false,
-      okText: () => "手动选择帧",
-      cancelText: () => "自动选择帧",
-      onOk() {
-        console.log("手动选择去喽");
-        //这里不知道为什么this变成undefined了，所以在上面用that保存一下this的值
-        visible.value = true;
-      },
-      onCancel() {
-        console.log("自动选择去喽");
-      },
-    });
+    if (videocounts !== 0) {
+      Modal.confirm({
+        title: () => "上传结果",
+        content: () =>
+          createVNode("div", {}, [
+            createVNode("p", {}, `您上传了${imagecounts}个图片文件`),
+            createVNode(
+              "p",
+              {},
+              `${videocounts}个视频文件需要选择一些帧用来标注，您可以手动选择特定帧，或者默认使用按时间均分取出的10帧`
+            ),
+            createVNode(
+              "p",
+              {},
+              `另有${othercounts}个文件无法识别（这些文件的MIME类型不是image或video）`
+            ),
+          ]),
+        maskClosable: false,
+        okText: () => "手动选择帧",
+        cancelText: () => "自动选择帧",
+        onOk() {
+          console.log("手动选择去喽");
+          //这里不知道为什么this变成undefined了，所以在上面用that保存一下this的值
+          visible.value = true;
+        },
+        onCancel() {
+          console.log("自动选择去喽");
+        },
+      });
+    } else {
+      Modal.success({
+        title: () => "上传结果",
+        content: () =>
+          createVNode("div", {}, [
+            createVNode("p", {}, `您上传了${imagecounts}个图片文件`),
+            createVNode(
+              "p",
+              {},
+              `另有${othercounts}个文件无法识别，将被舍弃（这些文件的MIME类型不是image或video）`
+            ),
+          ]),
+        maskClosable: false,
+        okText: () => "确认",
+        onOk() {
+          console.log("上传图片成功");
+        },
+      });
+    }
   };
 
   const selectOver = (val) => {
@@ -153,13 +198,13 @@ const aboutSelect = (formData) => {
       formData.append(name, blob);
     }
     message.success("截图已成功保存");
+    appendBoolean.value = true;
+    visible.value = false;
   };
 
   const handleOk = () => {
     console.log("手动选择完毕");
     upProcess.value.addScreenShot();
-    // message.success("截图已成功保存");
-    visible.value = false;
   };
 
   const handleCancel = () => {
@@ -168,6 +213,8 @@ const aboutSelect = (formData) => {
   };
 
   return {
+    appendBoolean,
+    appendPic,
     upProcess,
     visible,
     videoList,
@@ -190,8 +237,8 @@ const aboutForm = (formData) => {
       .validate()
       .then(() => {
         console.log("values", taskForm);
-        for(let i of formData.keys()){
-          console.log("截图内容",formData.get(i));
+        for (let i of formData.keys()) {
+          console.log("最终图片", formData.get(i));
         }
       })
       .catch((error) => {
@@ -225,6 +272,8 @@ export default defineComponent({
   setup() {
     const formData = new FormData();
     const {
+      appendBoolean,
+      appendPic,
       upProcess,
       visible,
       videoList,
@@ -237,6 +286,8 @@ export default defineComponent({
       aboutForm(formData);
 
     return {
+      appendBoolean,
+      appendPic,
       selectFolder,
       selectOver,
       upProcess,
@@ -251,10 +302,6 @@ export default defineComponent({
       removeTag,
       addTag,
     };
-  },
-
-  methods: {
-    selectFolder(e) {},
   },
   components: {
     MinusCircleOutlined,
@@ -292,10 +339,15 @@ export default defineComponent({
   background-color: rgba(200, 200, 200, 0.5);
   padding: 40px;
 }
+
 .setTags {
   height: 200px;
   background-color: rgba(200, 200, 200);
   overflow: scroll;
+  margin-bottom: 20px;
+}
+.setTags:deep(.ant-form-item) {
+  margin-bottom: 0;
 }
 .dynamic-delete-button {
   cursor: pointer;
