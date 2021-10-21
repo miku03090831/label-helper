@@ -366,4 +366,15 @@ export default defineComponent({
   padding: 0 !important;
   height: 600px;
 }
+
+.publish:deep(.ant-modal-content){
+  background-color: rgb(196,226,216)!important;
+}
+.publish:deep(.ant-modal-header){
+  background-color: rgb(196,226,216)!important;
+  border: 0!important;
+}
+.publish:deep(.ant-modal-footer){
+  border: 0!important;
+}
 </style>

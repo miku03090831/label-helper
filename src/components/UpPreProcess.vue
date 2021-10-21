@@ -15,7 +15,7 @@
           style="display: none"
           muted
         ></video>
-        <canvas width="180" height="180"></canvas>
+        <canvas width="160" height="160"></canvas>
       </div>
     </div>
     <div class="mid-player">
@@ -28,11 +28,11 @@
       ></video>
     </div>
     <div class="right-operate">
-      <div class="screenshot-button">
-        <div @click="screenshot">截图</div>
+      <div class="screenshot-button" @click="screenshot">
+        点击截图
       </div>
       <div class="show-pic">
-        <div class="pic-title">截图预览()</div>
+        <div class="pic-title">左键单击任意图片可以查看大图。右键单击任意图片，或者在查看大图时点击正下方删除按钮，都可以删除当前截图</div>
         <div class="pic-list" ref="preview">
           <div
             class="pic"
@@ -82,16 +82,16 @@ const getCoverPage = (index, videos) => {
 
     if (col_direction) {
       //细长
-      trueHeight = 180;
-      trueWidth = (180 * rawWidth) / rawHeight;
-      trueX = 90 - trueWidth / 2;
+      trueHeight = 160;
+      trueWidth = (160 * rawWidth) / rawHeight;
+      trueX = 80 - trueWidth / 2;
       trueY = 0;
     } else {
       //扁平
-      trueHeight = (180 * rawHeight) / rawWidth;
-      trueWidth = 180;
+      trueHeight = (160 * rawHeight) / rawWidth;
+      trueWidth = 160;
       trueX = 0;
-      trueY = 90 - trueHeight / 2;
+      trueY = 80 - trueHeight / 2;
     }
     //要按照原视频比例，调整封面在canvas的宽高
     ctx.drawImage(videoItem, trueX, trueY, trueWidth, trueHeight);
@@ -107,6 +107,13 @@ const aboutVideo = (props) => {
   const getVideo = (index) => props.videoList[index];
   const chooseVideo = (index) => {
     videoSrc.value = props.videoList[index];
+    let playing = videos.value[index]
+    let nodes=playing.parentNode.querySelectorAll(".list-item");
+    // console.log(nodes)
+    for(let node of nodes){
+      node.style.background='white'
+    }
+    playing.style.background='orange'
   };
   return {
     videos,
@@ -235,6 +242,10 @@ export default defineComponent({
 </script>
 
 <style  scoped>
+.ant-modal-content{
+  background-color: #000!important;
+}
+
 .process {
   width: 1000px;
   height: 600px;
@@ -246,7 +257,7 @@ export default defineComponent({
 .left-list {
   width: 20%;
   height: 100%;
-  background-color: pink;
+  background-color: rgb(178,200,187);
   overflow: scroll;
 }
 
@@ -259,7 +270,7 @@ export default defineComponent({
 .right-operate {
   width: 20%;
   height: 100%;
-  background-color: red;
+  background-color: rgb(178,200,187);
 }
 .list-title {
   height: 30px;
@@ -272,7 +283,8 @@ export default defineComponent({
   width: 180px;
   height: 180px;
   margin: 10px;
-  background-color: green;
+  background-color: white;
+  padding: 10px;
 }
 
 video {
@@ -283,7 +295,10 @@ video {
 .screenshot-button {
   width: 100%;
   height: 20%;
-  border: black 1px solid;
+  font-size: 40px;
+  line-height: 120px;
+  text-align: center;
+  background-color: rgb(173,190,177);
 }
 
 .show-pic {
@@ -294,7 +309,8 @@ video {
 .pic-title {
   width: 100%;
   height: 20%;
-  background-color: pink;
+  background-color: rgb(200,200,200);
+  padding: 5px;
 }
 
 .pic-list {

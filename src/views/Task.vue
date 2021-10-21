@@ -6,7 +6,7 @@
         </div>
         <div class="task-body">
             <Publish v-if="func_num===1"/>
-            <div class="test2" v-if="func_num===2"></div>
+            <Receive v-if="func_num===2"/>
         </div>
     </div>
 </template>
