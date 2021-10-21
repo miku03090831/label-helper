@@ -112,6 +112,7 @@ const aboutSelect = (formData) => {
     clearFormData();
     videoList.splice(0, videoList.length);
     console.log("清除");
+    appendBoolean.value=false;
     let files = e.target.files;
     //文件夹名称
     let imagecounts = 0;
