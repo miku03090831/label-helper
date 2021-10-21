@@ -41,102 +41,210 @@
             </a-form-item>
           </div>
           <a-form-item>
-              <input type="file" @change="selectFolder($event)" webkitdirectory />
+            <input type="file" @change="selectFolder($event)" webkitdirectory />
           </a-form-item>
           <a-form-item>
             <a-button type="primary" @click="submitForm">发布任务</a-button>
+            <a-button>追加选择</a-button>
           </a-form-item>
         </a-form>
       </div>
     </div>
   </div>
-  <a-modal v-if="visible" v-model:visible="visible" title="手动选取帧" :maskClosable="false" @ok="handleOk" @cancel="handleCancel" width="1000px" :getContainer="()=>$refs.publishRef">
-    <UpPreProcess :videoList="videoList" ref="upProcess" @testEmit="wuhu"/>
+  <a-modal
+    v-if="visible"
+    v-model:visible="visible"
+    title="手动选取帧"
+    :maskClosable="false"
+    @ok="handleOk"
+    @cancel="handleCancel"
+    width="1000px"
+    :getContainer="() => $refs.publishRef"
+  >
+    <UpPreProcess
+      :videoList="videoList"
+      ref="upProcess"
+      @selectOver="selectOver"
+    />
   </a-modal>
 </template>
 
 <script type="text/javascript" >
-import md5 from "js-md5"
+import md5 from "js-md5";
 import { message } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons-vue";
-import {Modal} from "ant-design-vue"
-import { createVNode,defineComponent, reactive, ref } from "vue";
+import { Modal } from "ant-design-vue";
+import { createVNode, defineComponent, reactive, ref } from "vue";
 import UpPreProcess from "./UpPreProcess.vue";
+
+const aboutSelect = (formData) => {
+  const upProcess = ref(null);
+  const visible = ref(false);
+  const videoList = [];
+  const selectFolder = (e) => {
+    for (let key of formData.keys()) {
+      formData.delete(key);
+    }
+    videoList.splice(0, videoList.length);
+
+    let files = e.target.files;
+    //文件夹名称
+    let imagecounts = 0;
+    let videocounts = 0;
+    let othercounts = 0;
+    //文件信息转换成FormData结构遍历上传
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].type.startsWith("image")) {
+        imagecounts += 1;
+        console.log("图片", files[i]);
+        formData.append(i, files[i]);
+      } else if (files[i].type.startsWith("video")) {
+        videocounts += 1;
+        videoList.push(URL.createObjectURL(files[i]));
+      } else {
+        othercounts += 1;
+      }
+      //上传
+    }
+    for (let i in videoList) {
+      console.log(videoList[i]);
+    }
+    Modal.confirm({
+      title: () => "上传结果",
+      content: () =>
+        createVNode("div", {}, [
+          createVNode("p", {}, `您上传了${imagecounts}个图片文件`),
+          createVNode(
+            "p",
+            {},
+            `${videocounts}个视频文件需要选择一些帧用来标注，您可以手动选择特定帧，或者默认使用按时间均分取出的10帧`
+          ),
+          createVNode(
+            "p",
+            {},
+            `另有${othercounts}个文件无法识别（这些文件的MIME类型不是image或video）`
+          ),
+        ]),
+      maskClosable: false,
+      okText: () => "手动选择帧",
+      cancelText: () => "自动选择帧",
+      onOk() {
+        console.log("手动选择去喽");
+        //这里不知道为什么this变成undefined了，所以在上面用that保存一下this的值
+        visible.value = true;
+      },
+      onCancel() {
+        console.log("自动选择去喽");
+      },
+    });
+  };
+
+  const selectOver = (val) => {
+    for (let base64 of val) {
+      let data = window.atob(base64.split(",")[1]);
+      let arr = new Uint8Array(data.length);
+      for (let i = 0; i < data.length; i++) {
+        arr[i] = data.charCodeAt(i);
+      }
+      let name = md5(base64);
+      let blob = new Blob([arr], { type: "image/png" });
+      blob.lastModifiedDate = new Date();
+      blob.name = name + ".png";
+      formData.append(name, blob);
+    }
+    message.success("截图已成功保存");
+  };
+
+  const handleOk = () => {
+    console.log("手动选择完毕");
+    upProcess.value.addScreenShot();
+    // message.success("截图已成功保存");
+    visible.value = false;
+  };
+
+  const handleCancel = () => {
+    console.log("手动选择取消");
+    visible.value = false;
+  };
+
+  return {
+    upProcess,
+    visible,
+    videoList,
+    selectFolder,
+    selectOver,
+    handleOk,
+    handleCancel,
+  };
+};
+
+const aboutForm = (formData) => {
+  const taskRef = ref(null);
+  const taskForm = reactive({
+    tags: [],
+    title: "",
+  });
+
+  const submitForm = () => {
+    taskRef.value
+      .validate()
+      .then(() => {
+        console.log("values", taskForm);
+        for(let i of formData.keys()){
+          console.log("截图内容",formData.get(i));
+        }
+      })
+      .catch((error) => {
+        console.log("error", error);
+      });
+  };
+  const removeTag = (item) => {
+    let index = taskForm.tags.indexOf(item);
+    if (index !== -1) {
+      taskForm.tags.splice(index, 1);
+    }
+  };
+
+  const addTag = () => {
+    taskForm.tags.push({
+      value: "",
+      key: Date.now(),
+    });
+  };
+
+  return {
+    taskRef,
+    taskForm,
+    submitForm,
+    removeTag,
+    addTag,
+  };
+};
+
 export default defineComponent({
   setup() {
-      const visible = ref(false);
-      const upProcess = ref(null)
     const formData = new FormData();
-    const videoList = [];
-    let destroyFlag;
-    const taskRef = ref(null);
-    const taskForm = reactive({
-      tags: [],
-      title: "",
-    });
+    const {
+      upProcess,
+      visible,
+      videoList,
+      selectFolder,
+      selectOver,
+      handleOk,
+      handleCancel,
+    } = aboutSelect(formData);
+    const { taskForm, taskRef, submitForm, removeTag, addTag } =
+      aboutForm(formData);
 
-    const submitForm = () => {
-      taskRef.value
-        .validate()
-        .then(() => {
-          console.log("values", taskForm);
-        })
-        .catch((error) => {
-          console.log("error", error);
-        });
-    };
-
-    const removeTag = (item) => {
-      let index = taskForm.tags.indexOf(item);
-      if (index !== -1) {
-        taskForm.tags.splice(index, 1);
-      }
-    };
-
-    const addTag = () => {
-      taskForm.tags.push({
-        value: "",
-        key: Date.now(),
-      });
-    };
-
-    const handleOk = ()=>{
-      console.log("手动选择完毕")
-      upProcess.value.addScreenShot();
-      // message.success("截图已成功保存");
-      visible.value = false;
-    }
-
-    const wuhu = (val)=>{
-
-      for(let base64 of val){
-          let data = window.atob(base64.split(',')[1]);
-          let arr = new Uint8Array(data.length)
-          for(let i=0;i<data.length;i++){
-            arr[i] = data.charCodeAt(i);
-          }
-          let name = md5(base64)
-          console.log(name)
-
-          let blob = new Blob([arr],{type:'image/png'})
-          blob.lastModifiedDate = new Date();
-          blob.name=name+".png"
-          formData.append(name,blob)
-      }
-    }
-
-    const handleCancel = ()=>{
-      console.log("手动选择取消")
-      visible.value = false;
-    }
     return {
-      wuhu,
+      selectFolder,
+      selectOver,
       upProcess,
       handleOk,
       handleCancel,
       visible,
       videoList,
-      formData,
+      // formData,
       taskRef,
       taskForm,
       submitForm,
@@ -146,55 +254,7 @@ export default defineComponent({
   },
 
   methods: {
-    selectFolder(e) {
-      this.videoList.splice(0,this.videoList.length)
-      let files = e.target.files;
-      //文件夹名称
-      var relativePath = files[0].webkitRelativePath;
-      let imagecounts = 0;
-      let videocounts = 0;
-      let othercounts = 0;
-      //文件信息转换成FormData结构遍历上传
-      for (let i = 0; i < files.length; i++) {
-        if(files[i].type.startsWith("image")){
-          imagecounts+=1;
-          console.log("图片",files[i])
-          this.formData.append(i,files[i])
-        }
-        else if(files[i].type.startsWith("video")){
-          videocounts+=1;
-          this.videoList.push(URL.createObjectURL(files[i]))
-        }
-        else{
-          othercounts+=1;
-        }
-        //上传
-      }
-      for(let i in this.videoList){
-        console.log(this.videoList[i])
-      }
-      const that = this;
-      Modal.confirm({
-        title:()=>"上传结果",
-        content:()=>createVNode('div',{},[createVNode('p',{},`您上传了${imagecounts}个图片文件`),
-                                          createVNode('p',{},`${videocounts}个视频文件需要选择一些帧用来标注，您可以手动选择特定帧，或者默认使用按时间均分取出的10帧`),
-                                          createVNode('p',{},`另有${othercounts}个文件无法识别（这些文件的MIME类型不是image或video）`)]),
-        maskClosable:false,
-        okText:()=>'手动选择帧',
-        cancelText:()=>'自动选择帧',
-        onOk(){
-          console.log("手动选择去喽")
-          //这里不知道为什么this变成undefined了，所以在上面用that保存一下this的值
-          that.visible=true
-        },
-        onCancel(){
-          console.log("自动选择去喽")
-        },
-      });
-    },
-    checkVideo(){
-
-    }
+    selectFolder(e) {},
   },
   components: {
     MinusCircleOutlined,
@@ -249,8 +309,8 @@ export default defineComponent({
   color: #777;
 }
 
-.publish:deep(.ant-modal-body){
-  padding: 0!important;
+.publish:deep(.ant-modal-body) {
+  padding: 0 !important;
   height: 600px;
 }
 </style>

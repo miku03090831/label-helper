@@ -163,7 +163,7 @@ const aboutPic = (context) => {
 
   const addScreenShot = () => {
     console.log("触发了增加");
-    context.emit("testEmit",toRaw(picList.value));
+    context.emit("selectOver",toRaw(picList.value));
   };
 
   const deletePic = (index) => {
