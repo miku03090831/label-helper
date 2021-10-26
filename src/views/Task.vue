@@ -40,17 +40,7 @@ import { defineComponent,ref } from "vue";
 </script>
 
 <style scoped>
-.test1{
-    height: 100%;
-    width: 100%;
-    background-color: green;
-}
 
-.test2{
-    height: 100%;
-    width: 100%;
-    background-color: blue;
-}
 
 .tasks{
     margin-top: 46px;
@@ -62,6 +52,7 @@ import { defineComponent,ref } from "vue";
 .task-body{
     width: 80%;
     height: 100%;
+    overflow-y: scroll;
 }
 
 .side-bar{

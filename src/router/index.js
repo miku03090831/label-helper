@@ -3,6 +3,7 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Home from '../views/Home.vue'
 import Task from '../views/Task.vue'
+import TaskDetail from "../views/TaskDetail.vue"
 
 
 const routes = [{
@@ -17,6 +18,10 @@ const routes = [{
 },{
     path:'/tasks',
     component:Task
+},{
+    path:'/detail/:id',
+    component:TaskDetail,
+    props:true//将参数作为props传给组件
 }]
 
 const router = createRouter({

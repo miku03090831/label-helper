@@ -315,7 +315,6 @@ export default defineComponent({
 <style scoped>
 .publish {
   display: flex;
-
   flex-direction: column;
   align-items: center;
 }

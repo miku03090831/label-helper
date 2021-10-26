@@ -27,10 +27,10 @@ export default {
 
 
 
-.home {
+/* .home {
 
-  /* background-color: rgba(200, 200, 200, 0.5); */
-}
+  background-color: rgba(200, 200, 200, 0.5);
+} */
 /* 整体布局部分 */
 .title {
   height: 85px;
