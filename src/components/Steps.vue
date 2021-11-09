@@ -1,4 +1,4 @@
-!<template>
+<template>
   <div class="steps">
     <div class="step publish-step">
       <div class="introduction">

@@ -1,4 +1,4 @@
-!<template>
+<template>
   <div class="receive">
     <div class="receive-title">领取任务</div>
     <div class="list-container">
@@ -52,7 +52,9 @@ const aboutList = (taskList,router) => {
     }
   };
   const detail = (id) => {
-    router.push(`/detail/${id}`);
+    // router.push(`/detail/${id}`);
+    let {href} = router.resolve(`/detail/${id}`)
+    window.open(href,'_blank')
   };
 
   return {
@@ -166,14 +168,14 @@ export default defineComponent({
   width: 60vw;
   min-width: 584px;
   margin: 0 auto;
-  background-color: #fff;
+  background-color: rgb(175,215,237);
 }
 .list-container {
   margin: 0 auto;
   width: 60vw;
   min-width: 584px;
   height: calc(100% - 100px);
-  background-color: #000;
+  background-color: rgb(3,54,73);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -192,7 +194,7 @@ export default defineComponent({
   min-width: 146px;
   min-height: 146px;
   height: 15vw;
-  background-color: #121212;
+  background-color: rgb(3,54,73);
 }
 .list-item {
   position: relative;

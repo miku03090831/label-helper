@@ -1,4 +1,4 @@
-!<template>
+<template>
     <div class="tasks">
         <div class="side-bar">
             <a-button class="pub" ref="pub" @click="showPub">发布任务</a-button>
@@ -63,7 +63,7 @@ import { defineComponent,ref } from "vue";
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    background-color: #000;
+    background-color: rgb(3,54,73);
 }
 
 .ant-btn{

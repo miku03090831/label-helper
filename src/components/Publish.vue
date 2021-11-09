@@ -55,6 +55,9 @@
             <a-button @click="appendPic" v-show="appendBoolean"
               >追加截图</a-button
             >
+            <a-button @click="reSelect" v-show="reSelectBoolean && !appendBoolean"
+              >重新选择</a-button
+            >
           </a-form-item>
           <a-form-item>
             <a-button type="primary" @click="submitForm">发布任务</a-button>
@@ -94,6 +97,7 @@ const aboutSelect = (formData) => {
   const visible = ref(false);
   const videoList = [];
   const appendBoolean = ref(false);
+  const reSelectBoolean = ref(false);
   const clearFormData = () => {
     const temp = [];
     for (let key of formData.keys()) {
@@ -107,12 +111,16 @@ const aboutSelect = (formData) => {
   const appendPic = () => {
     visible.value = true;
   };
+  const reSelect = () => {
+    visible.value = true;
+  };
 
   const selectFolder = (e) => {
     clearFormData();
     videoList.splice(0, videoList.length);
     console.log("清除");
-    appendBoolean.value=false;
+    reSelectBoolean.value = false;
+    appendBoolean.value = false;
     let files = e.target.files;
     //文件夹名称
     let imagecounts = 0;
@@ -196,9 +204,11 @@ const aboutSelect = (formData) => {
       let blob = new Blob([arr], { type: "image/png" });
       blob.lastModifiedDate = new Date();
       blob.name = name + ".png";
-      formData.append(name, blob);
+      console.log(blob.name)
+      formData.append(name, blob,blob.name);
     }
     message.success("截图已成功保存");
+    reSelectBoolean.value = false;
     appendBoolean.value = true;
     visible.value = false;
   };
@@ -210,10 +220,13 @@ const aboutSelect = (formData) => {
 
   const handleCancel = () => {
     console.log("手动选择取消");
+    reSelectBoolean.value = true;
     visible.value = false;
   };
 
   return {
+    reSelect,
+    reSelectBoolean,
     appendBoolean,
     appendPic,
     upProcess,
@@ -273,6 +286,8 @@ export default defineComponent({
   setup() {
     const formData = new FormData();
     const {
+      reSelect,
+      reSelectBoolean,
       appendBoolean,
       appendPic,
       upProcess,
@@ -287,6 +302,8 @@ export default defineComponent({
       aboutForm(formData);
 
     return {
+      reSelect,
+      reSelectBoolean,
       appendBoolean,
       appendPic,
       selectFolder,
@@ -322,13 +339,13 @@ export default defineComponent({
 .form-container {
   background-color: rgba(200, 200, 200, 0.5);
   width: 600px;
-  margin-top: 70px;
+  /* margin-top: 30px; */
 }
 
 .form-title {
   width: 600px;
-  height: 100px;
-  line-height: 100px;
+  height: 70px;
+  line-height: 70px;
 
   font-size: 40px;
   padding-left: 20px;
@@ -361,19 +378,22 @@ export default defineComponent({
   color: #777;
 }
 
+.publish:deep(.ant-modal) {
+  top: 40px;
+}
 .publish:deep(.ant-modal-body) {
   padding: 0 !important;
-  height: 600px;
+  height: 550px;
 }
 
-.publish:deep(.ant-modal-content){
-  background-color: rgb(196,226,216)!important;
+.publish:deep(.ant-modal-content) {
+  background-color: rgb(196, 226, 216) !important;
 }
-.publish:deep(.ant-modal-header){
-  background-color: rgb(196,226,216)!important;
-  border: 0!important;
+.publish:deep(.ant-modal-header) {
+  background-color: rgb(196, 226, 216) !important;
+  border: 0 !important;
 }
-.publish:deep(.ant-modal-footer){
-  border: 0!important;
+.publish:deep(.ant-modal-footer) {
+  border: 0 !important;
 }
 </style>

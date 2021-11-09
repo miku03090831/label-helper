@@ -1,4 +1,4 @@
-!<template>
+<template>
     <div class="content">
         <div class="left">
           <a-button class="button" id="b1">发布任务</a-button>
