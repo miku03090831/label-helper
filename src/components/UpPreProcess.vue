@@ -130,12 +130,12 @@ const aboutPic = (context) => {
   let gallery;
 
   const deleteFullScreen = () => {
-    console.log("前", toRaw(picList.value));
+    // console.log("前", toRaw(picList.value));
     picList.value.splice(gallery.index, 1);
     nextTick(() => {
       gallery.update();
     });
-    console.log("后", toRaw(picList.value));
+    // console.log("后", toRaw(picList.value));
   };
 
   const screenshot = () => {
@@ -169,7 +169,6 @@ const aboutPic = (context) => {
   };
 
   const addScreenShot = () => {
-    console.log("触发了增加");
     context.emit("selectOver",toRaw(picList.value));
   };
 
@@ -248,7 +247,7 @@ export default defineComponent({
 
 .process {
   width: 1000px;
-  height: 550px;
+  height: 50px;
   background-color: #000;
   display: flex;
   flex-direction: row;

@@ -5,8 +5,8 @@
             <a-button class="rec" ref="rec" @click="showRec">领取任务</a-button>
         </div>
         <div class="task-body">
-            <Publish v-if="func_num===1"/>
-            <Receive v-if="func_num===2"/>
+            <Publish v-if="func_num==='1'"/>
+            <Receive v-if="func_num==='2'"/>
         </div>
     </div>
 </template>
@@ -14,24 +14,36 @@
 <script>
 import Publish from "../components/Publish.vue"
 import Receive from "../components/Receive.vue"
-import { defineComponent,ref } from "vue";
+import { defineComponent,ref, watch } from "vue";
+import { useRoute } from "vue-router";
     export default defineComponent({
         components:{
             Publish,Receive
         },
-        data(){
-            return{
-                func_num:1,
+        props:{
+            p_func_num:{
+                type:String,
+                default:'1'
             }
         },
-        methods:{
-            showPub(){
-                this.func_num=1;
-            },
-            showRec(){
-                this.func_num=2;
+        setup(props){
+            const route = useRoute();
+            const func_num = ref("");
+            func_num.value = props.p_func_num
+            const showPub = ()=>{
+               func_num.value="1";
             }
-
+            const showRec = ()=>{
+                func_num.value="2";
+            }
+            watch(()=>route.params,(newValue,oldValue)=>{
+                func_num.value =newValue.p_func_num;
+            })
+            return {
+                func_num,
+                showPub,
+                showRec,
+            }
         }
 
     })

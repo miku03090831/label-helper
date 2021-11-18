@@ -20,8 +20,8 @@
     <a-menu-item key="about" width="80px">
       关于
     </a-menu-item>
-    <a-menu-item class="personal" width="180px">
-      <div key="personal" class="login-status" width="180px">个人中心</div>
+    <a-menu-item class="personal" width="180px" key="personal">
+      <div  class="login-status" width="180px">个人中心</div>
     </a-menu-item>
   </a-menu>
   </div>
@@ -32,11 +32,64 @@
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
 import { defineComponent,ref, watch } from "vue";
+import { useRouter } from "vue-router";
+const jumpTo = (router,value)=>{
+//将导航栏的功能和路由对应起来
+  switch(value){
+    case "unverified":
+      {
+        console.log("待复核，没做好呢");
+      }
+      break;
+    case "verified":
+      {
+        console.log("已复核，没做好呢");
+      }
+      break;
+    case "publish":
+      {
+        router.push({
+          name:'tasks',
+          params:{
+            p_func_num:1
+          }
+        })
+      }
+      break;
+    case "receive":
+      {
+        router.push({
+          name:'tasks',
+          params:{
+            p_func_num:2
+          }
+        })
+      }
+      break;
+    case "verify":
+      {
+        console.log("去复核，还没做好呢")
+      }
+      break;
+    case "about":
+      {
+        console.log("关于界面，没做好")
+      }
+      break;
+    case "personal":
+      {
+        router.push(`/login`)
+        console.log("个人界面，没做好呢");
+      }
+      break;
+  }
+}
 export default defineComponent({
   setup(){
+    const router = useRouter();
     const current =ref()
     watch(current,(newValue,oldValue)=>{
-      console.log(newValue);
+      jumpTo(router,newValue[0]);
     })
     return {current}
   }
