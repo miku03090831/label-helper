@@ -2,7 +2,7 @@
   <div class="label">
     <div class="toolbar">
       <a-button @click="changeFunc(1)"> 矩形 </a-button>
-      <a-button @click="changeFunc(0)">选择</a-button>
+      <a-button @click="changeFunc(0)">拖拽</a-button>
       <a-button @click="changeFunc(2)">还原</a-button>
     </div>
     <div class="draw">
@@ -19,7 +19,7 @@ import { fabric } from "fabric";
 const aboutCanvas = () => {
   let fabricObj = null;
   let color = "#ff0000";
-  let group = null;
+  let draggingAll = false;
   const func = ref(0);
   let start = {},
     end = {},
@@ -45,44 +45,29 @@ const aboutCanvas = () => {
   const changeFunc = (f) => {
     func.value = f;
     if (func.value === 0) {
-      let objectsArray = getCanvas().getObjects();
-      console.log("大畜生");
-      for (let item of objectsArray) {
-        item.set("left", 0);
-        item.set("top", 0);
-        item.setCoords();
-      }
-      // let text = new fabric.Text('选中啦');
-      // let group = new fabric.Group([ text ], {
-      //   moveCursor:'pointer'
-      // });
-
-      // for(let a of objectsArray){
-      //   // getCanvas().remove(a);
-      //   group.add(a);
-      // }
-      let group = new fabric.Group(objectsArray,{
-        // originX:"left",
-        // originY:"top",
+      let canvas = getCanvas();
+      canvas.discardActiveObject();
+      let sel = new fabric.ActiveSelection(canvas.getObjects(), {
+        canvas: canvas,
       });
-      group.set("width", 600);
-      group.set("height", 450);
+      canvas.setActiveObject(sel);
+      canvas.requestRenderAll();
+      console.log("大畜生");
       //破案了，所有元素在group中的坐标，都是以group的正中心为原点。
       //根据所有元素的最大y坐标和x坐标来得到一个宽高
       //并且当宽高足够的时候，group会居中地摆放所有的元素，使得左右padding相等，上下padding相等。
       //当宽高不足的时候，也还是会居中，使得左右溢出的相等，上下溢出的相等
       //就可以先计算出group的中心，然后进行坐标系变换，把原点从group中心移到左上角去
-      group.setCoords();
-      getCanvas().add(group);
-      getCanvas().remove(group);
       // let item = objectsArray[0];
       // item.set("left",0);
       // item.set("top",0);
       // item.setCoords();
       // getCanvas().renderAll()
-      console.log("解散group之前", getCanvas().getObjects());
     }
     if (func.value === 1) {
+      let canvas = getCanvas();
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
       // let objectsArray = getCanvas().getObjects();
       // for (let item of objectsArray) {
       //   //这里给top和left的值应该经过计算
@@ -97,8 +82,19 @@ const aboutCanvas = () => {
       fabricObj.getObjects()[0].set("selectable", false);
       console.log(fabricObj.getObjects());
     }
-    if(func.value===2){
-      getCanvas().setZoom(1);
+    if (func.value === 2) {
+      let canvas = getCanvas();
+      canvas.discardActiveObject();
+      let sel = new fabric.ActiveSelection(canvas.getObjects(), {
+        canvas: canvas,
+      });
+      canvas.setActiveObject(sel);
+      canvas.requestRenderAll();
+      canvas.setZoom(1);
+      sel.set("left",0);
+      sel.set("top",0);
+      sel.setCoords();
+      console.log("还原后",sel)
     }
   };
 
@@ -113,7 +109,8 @@ const aboutCanvas = () => {
     //限制最大和最小缩放比例
     zoom = Math.max(0.1, zoom);
     zoom = Math.min(10, zoom);
-    fabricObj.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+    // fabricObj.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+    fabricObj.setZoom(zoom);
     opt.e.preventDefault();
     opt.e.stopPropagation();
   };
@@ -146,7 +143,7 @@ const aboutCanvas = () => {
   const mouseDown = (opt) => {
     // console.log("pointer",opt.pointer)
     // console.log("absolute",opt.absolutePointer)
-    let pic = getCanvas().getObjects()[0].oCoords;
+    let pic = getCanvas().getObjects()[0].aCoords;
     let {
       tl: { y: top, x: left },
       br: { y: bottom, x: right },
@@ -160,7 +157,7 @@ const aboutCanvas = () => {
   };
 
   const mouseUp = (opt) => {
-    let pic = getCanvas().getObjects()[0].oCoords;
+    let pic = getCanvas().getObjects()[0].aCoords;
     let {
       tl: { y: top, x: left },
       br: { y: bottom, x: right },
@@ -195,22 +192,7 @@ const aboutCanvas = () => {
       fabricObj.setHeight(676);
       // fabricObj.setWidth(image.width);
       // fabricObj.setHeight(image.height);
-      // imageInstance.on({
-      //   moving: () => {
-      //     if (!group) {
-      //       let objectsArray = getCanvas().getObjects()
-      //       group = new fabric.Group(objectsArray)
-      //       console.log(group)
-      //       getCanvas().setActiveObject(group)
-      //       console.log("我被移动啦")
 
-      //     }
-      //   },
-      //   moved: (opt) => {
-      //     group = null;
-
-      //   },
-      // });
       fabricObj.add(imageInstance);
     };
 
