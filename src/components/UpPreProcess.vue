@@ -247,7 +247,7 @@ export default defineComponent({
 
 .process {
   width: 1000px;
-  height: 50px;
+  height: 560px;
   background-color: #000;
   display: flex;
   flex-direction: row;

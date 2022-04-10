@@ -75,7 +75,7 @@ import { useRoute } from "vue-router";
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    background-color: rgb(3,54,73);
+    background-color: #203962
 }
 
 .ant-btn{

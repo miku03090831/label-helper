@@ -1,40 +1,81 @@
 <template>
-    <div class="content">
-        <div class="left">
-          <a-button class="button" id="b1">发布任务</a-button>
-          <a-button class="button" id="b2">领取任务</a-button>
-          <a-button class="button" id="b3">查看数据集</a-button>
-          <a-button class="button" id="b4">复核</a-button>
-        </div>
-        <div class="right">
-          <div class="description">
-            Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cpit, quis
-            aliquid sunt at labore praesentium magni quidem repellat nam?
-            Impedit, obcaecati reiciendis.
-          </div>
-          <div class="picture">
-            <a-carousel>
-              <div class="carousel-pic">
-                <img src="../views/testimg/1.jpg" alt="" />
-              </div>
-              <div class="carousel-pic">
-                <img src="../views/testimg/2.jpg" alt="" />
-              </div>
-              <div class="carousel-pic">
-                <img src="../views/testimg/3.jpg" alt="" />
-              </div>
-              <!-- <div class="carousel-pic"><img src="../assets/4.jpg" alt=""></div>
-                        <div class="carousel-pic"><img src="../assets/5.jpg" alt=""></div> -->
-            </a-carousel>
-          </div>
-        </div>
+  <div class="content">
+    <div class="left">
+      <a-button class="button" id="b1" @click="toPub">发布任务</a-button>
+      <a-button class="button" id="b2" @click="toRec">领取任务</a-button>
+      <a-button class="button" id="b3" @click="toMyPub">我的发布</a-button>
+      <a-button class="button" id="b4" @click="toMyRec">我的领取</a-button>
     </div>
+    <div class="right">
+      <div class="description">
+        label-helper是一个在线图像标注平台，用户可以将待标注的图片作为任务发布，其他用户可以领取任务，对图片完成标注。有效提高了用户的时间利用率，让开发者不必亲自标注图像
+      </div>
+      <div class="picture">
+        <a-carousel>
+          <div class="carousel-pic">
+            <img src="../views/testimg/1.jpg" alt="" style="height:358px; " />
+          </div>
+          <div class="carousel-pic">
+            <img src="../views/testimg/2.jpg" alt="" style="height:358px; "/>
+          </div>
+          <div class="carousel-pic">
+            <img src="../views/testimg/3.jpg" alt="" style="height:358px; "/>
+          </div>
+          <!-- <div class="carousel-pic"><img src="../assets/4.jpg" alt=""></div>
+                        <div class="carousel-pic"><img src="../assets/5.jpg" alt=""></div> -->
+        </a-carousel>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-    export default {
-        
+import { defineComponent } from "vue";
+import { useRouter } from "vue-router";
+
+export default defineComponent({
+  setup() {
+    const router = useRouter();
+    const toPub = () => {
+      router.push({
+        name: "tasks",
+        params: {
+          p_func_num: 1,
+        },
+      });
+    };
+    const toRec = ()=>{
+      router.push({
+          name: "tasks",
+          params: {
+            p_func_num: 2,
+          },
+        });
     }
+    const toMyPub = ()=>{
+      router.push({
+          name: "personal",
+          params: {
+            p_func_num: 1,
+          },
+        });
+    }
+    const toMyRec = ()=>{
+      router.push({
+          name: "personal",
+          params: {
+            p_func_num: 2,
+          },
+        });
+    }
+    return {
+      toPub,
+      toRec,
+      toMyPub,
+      toMyRec
+    }
+  },
+});
 </script>
 
 <style scoped>
@@ -125,8 +166,12 @@
   color: antiquewhite !important;
 }
 
+.carousel-pic img{
+object-fit: contain;
+}
 .ant-carousel :deep(.slick-slide) {
   height: 358px;
   overflow: hidden;
+  
 }
 </style>

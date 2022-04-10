@@ -28,15 +28,36 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, toRaw } from "vue";
+import { defineComponent, reactive, ref, toRaw,getCurrentInstance } from "vue";
+import { message } from "ant-design-vue";
+import { useRouter } from "vue-router";
 export default defineComponent({
   setup() {
+    localStorage.removeItem('labelLogin')
+    localStorage.removeItem('jwtoken')
+    let {proxy} = getCurrentInstance();
+    const router = useRouter();
     const loginForm = reactive({
       account: "",
       password: "",
     });
     const onSubmit = () => {
-      console.log("submit", toRaw(loginForm));
+      proxy.$axios.post("/api/users/login",  toRaw(loginForm))
+      .then((res)=>{
+        if(res.data.state===false){
+          message.error(res.data.message)
+        }
+        else{
+          
+          message.success("登录成功")
+          localStorage.setItem('labelLogin',JSON.stringify(res.data.username));
+          const {token} = res.data
+          localStorage.setItem('jwtoken',token)
+          router.push("/")
+        }
+      }).catch((error)=>{
+        console.log(error)
+      })
     };
 
     return {
@@ -49,6 +70,7 @@ export default defineComponent({
       },
       loginForm,
       onSubmit,
+      proxy
     };
   },
 });

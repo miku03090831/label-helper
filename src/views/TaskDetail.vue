@@ -10,15 +10,11 @@
           </template>
         </div>
       </div>
-      
+
       <div class="pic-wrapper">
-        <div class="back-to-now" @click="backToNow">
-            回到当前
-          </div>
-        <div class="to-left" @click="toLeft">
-          <img src="" alt="">
-        </div>
-        
+        <div class="back-to-now" @click="backToNow">回到当前</div>
+        <div class="to-left" @click="toLeft">上一个</div>
+
         <div class="pic-container custom-scroll-bar" ref="scrollBar">
           <div
             class="pic"
@@ -29,9 +25,7 @@
             <img :src="item" alt="" style="width: 90%; height: 90%" />
           </div>
         </div>
-        <div class="to-right" @click="toRight">
-          <img src="" alt="">
-        </div>
+        <div class="to-right" @click="toRight">下一个</div>
       </div>
       <div class="big-pic-container" ref="bigPic">
         <img :src="imgSrc" alt="" />
@@ -52,37 +46,51 @@ import {
   ref,
   onMounted,
   computed,
+  getCurrentInstance,
 } from "vue";
 import { message } from "ant-design-vue";
-const aboutButton = ()=>{
-  const closePage = ()=>{
-    window.close()
-  }
-  const receiveTask = ()=>{
-    message.success("领取成功")
-  }
-  return{
+const aboutButton = (proxy, tid) => {
+  const closePage = () => {
+    window.close();
+  };
+  const receiveTask = () => {
+    message.success("领取成功");
+    proxy.$axios
+      .post("/api/taskChange/receiveTask", {
+        taskid: tid,
+        rid: localStorage.getItem("labelLogin"),
+      })
+      .then((res) => {
+      });
+  };
+  return {
     closePage,
-    receiveTask
-  }
-}
+    receiveTask,
+  };
+};
 const aboutScroll = (scrollBar, task) => {
   const imgIndex = ref(0);
   const getBigPic = (index) => {
     imgIndex.value = index;
     // console.log(imgIndex.value);
     let nodes = scrollBar.value.querySelectorAll(".pic");
-    for(let node of nodes){
-      node.style.background="rgb(200,200,200)"
+    for (let node of nodes) {
+      node.style.background = "rgb(200,200,200)";
     }
-    nodes[index].style.background="orange"
+    nodes[index].style.background = "orange";
   };
   const toLeft = () => {
-    if (Math.abs(scrollBar.value.scrollLeft-0) < 5 || Math.abs(scrollBar.value.offsetWidth/5 - scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5)) < 5) {
+    if (
+      Math.abs(scrollBar.value.scrollLeft - 0) < 5 ||
+      Math.abs(
+        scrollBar.value.offsetWidth / 5 -
+          (scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5))
+      ) < 5
+    ) {
       scrollBar.value.scrollLeft -= scrollBar.value.offsetWidth / 5;
       if (imgIndex.value >= 1) {
         // imgIndex.value -= 1;
-        getBigPic(imgIndex.value-1);
+        getBigPic(imgIndex.value - 1);
       }
     } else {
       // console.log("没对齐，偏差了",Math.abs(scrollBar.value.offsetWidth/5 - scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5)))
@@ -91,66 +99,83 @@ const aboutScroll = (scrollBar, task) => {
     }
   };
   const toRight = () => {
-    if (Math.abs(scrollBar.value.scrollLeft-0) < 5 || Math.abs(scrollBar.value.offsetWidth/5 - scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5)) < 5) {
+    if (
+      Math.abs(scrollBar.value.scrollLeft - 0) < 5 ||
+      Math.abs(
+        scrollBar.value.offsetWidth / 5 -
+          (scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5))
+      ) < 5
+    ) {
       scrollBar.value.scrollLeft += scrollBar.value.offsetWidth / 5;
       if (imgIndex.value < task.imgs.length - 1) {
         // imgIndex.value += 1;
-        getBigPic(imgIndex.value+1)
+        getBigPic(imgIndex.value + 1);
       }
     } else {
       // console.log("没对齐，偏差了",Math.abs(scrollBar.value.offsetWidth/5 - scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5)))
       scrollBar.value.scrollLeft +=
-        (scrollBar.value.offsetWidth / 5) - scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5);
+        scrollBar.value.offsetWidth / 5 -
+        (scrollBar.value.scrollLeft % (scrollBar.value.offsetWidth / 5));
     }
   };
-  const backToNow = ()=>{
-
-    scrollBar.value.scrollLeft = imgIndex.value * scrollBar.value.offsetWidth/5
-  }
+  const backToNow = () => {
+    scrollBar.value.scrollLeft =
+      (imgIndex.value * scrollBar.value.offsetWidth) / 5;
+  };
   return {
     getBigPic,
     imgIndex,
     toLeft,
     toRight,
-    backToNow
+    backToNow,
   };
 };
 
 export default defineComponent({
   props: ["id"],
   setup(props) {
-    const scrollBar = ref(null);
     const task = reactive({
       id: "1",
       title: "test1",
-      tags: ["花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木","花", "小鸟", "金枪鱼", "昆虫", "狗尾巴草", "灌木",],
+      tags: [],
       uploader: "user1",
-      imgs: [
-        "https://img7.51tietu.net/pic/2019-082412/ykbpo4rebqfykbpo4rebqf.jpg",
-        "http://qqpublic.qpic.cn/qq_public/0/0-3973878894-A12F35B7356F47ABF34D1BB9543B6C92/0?fmt=jpg&size=45&h=675&w=900&ppv=1.jpg",
-        "http://www.005.tv/uploads/allimg/180714/1QJK101-0.jpg",
-        "http://qqpublic.qpic.cn/qq_public/0/0-3973878894-A12F35B7356F47ABF34D1BB9543B6C92/0?fmt=jpg&size=45&h=675&w=900&ppv=1.jpg",
-        "http://www.005.tv/uploads/allimg/180714/1QJK101-0.jpg",
-        "http://qqpublic.qpic.cn/qq_public/0/0-3973878894-A12F35B7356F47ABF34D1BB9543B6C92/0?fmt=jpg&size=45&h=675&w=900&ppv=1.jpg",
-        "http://www.005.tv/uploads/allimg/180714/1QJK101-0.jpg",
-        "https://img7.51tietu.net/pic/2019-082412/ykbpo4rebqfykbpo4rebqf.jpg",
-        "http://qqpublic.qpic.cn/qq_public/0/0-3973878894-A12F35B7356F47ABF34D1BB9543B6C92/0?fmt=jpg&size=45&h=675&w=900&ppv=1.jpg",
-        "http://www.005.tv/uploads/allimg/180714/1QJK101-0.jpg",
-        "https://img7.51tietu.net/pic/2019-082412/ykbpo4rebqfykbpo4rebqf.jpg",
-        "http://qqpublic.qpic.cn/qq_public/0/0-3973878894-A12F35B7356F47ABF34D1BB9543B6C92/0?fmt=jpg&size=45&h=675&w=900&ppv=1.jpg",
-        "http://www.005.tv/uploads/allimg/180714/1QJK101-0.jpg",
-      ],
+      imgs: [],
     });
-    const { getBigPic, imgIndex,toLeft,toRight,backToNow } = aboutScroll(scrollBar, task);
-    const {closePage,receiveTask} = aboutButton()
+    let { proxy } = getCurrentInstance();
+    proxy.$axios
+      .post("/api/getTask/getCertainTask", { taskid: props.id })
+      .then((res) => {
+        task.title = res.data.message[0].taskName;
+      });
+    proxy.$axios
+      .post("/api/getTask/getCertainTags", { taskid: props.id })
+      .then((res) => {
+        for (let tag of res.data.message) {
+          task.tags.push(tag.tag);
+        }
+      });
 
-    onMounted(()=>{
-      getBigPic(0);
-    })
+    const scrollBar = ref(null);
+
+    const { getBigPic, imgIndex, toLeft, toRight, backToNow } = aboutScroll(
+      scrollBar,
+      task
+    );
+    const { closePage, receiveTask } = aboutButton(proxy, props.id);
+
+    onMounted(() => {
+      proxy.$axios
+        .post("/api/getTask/getCertainPics", { taskid: props.id })
+        .then((res) => {
+          for (let pic of res.data.message) {
+            task.imgs.push(pic.img);
+          }
+          getBigPic(0);
+        });
+    });
     const imgSrc = computed(() => {
       return task.imgs[imgIndex.value];
     });
-
 
     return {
       closePage,
@@ -181,7 +206,7 @@ export default defineComponent({
   min-width: 500px;
   height: 100%;
   min-height: 500px;
-  background-color: rgb(196,226,216);
+  background-color: rgb(196, 226, 216);
   margin: 0 auto;
 }
 
@@ -219,7 +244,6 @@ export default defineComponent({
   align-items: center;
   flex-wrap: wrap;
   overflow-y: scroll;
-
 }
 .ant-tag {
   margin: 3px !important;
@@ -278,7 +302,7 @@ export default defineComponent({
 .custom-scroll-bar::-webkit-scrollbar-thumb:hover {
   background-color: rgb(200, 200, 200);
 }
-.back-to-now{
+.back-to-now {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.4);
   top: 20px;
@@ -297,7 +321,6 @@ export default defineComponent({
   align-items: center;
 }
 
-
 .to-left {
   top: 20px;
   left: 0%;
@@ -307,7 +330,7 @@ export default defineComponent({
   right: 0%;
 }
 .to-left img,
-.to-right img{
+.to-right img {
   background-color: #000;
   width: 20px;
   height: 40px;
@@ -318,19 +341,19 @@ export default defineComponent({
   background-color: rgb(178, 200, 178);
 }
 
-.big-pic-container img{
+.big-pic-container img {
   object-fit: contain;
   width: 100%;
   height: 100%;
 }
-.detail-button{
+.detail-button {
   height: 10%;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-.detail-button .ant-btn{
+.detail-button .ant-btn {
   border-radius: 5px;
   margin-left: 50px;
   margin-right: 50px;

@@ -55,7 +55,9 @@
             <a-button @click="appendPic" v-show="appendBoolean"
               >追加截图</a-button
             >
-            <a-button @click="reSelect" v-show="reSelectBoolean && !appendBoolean"
+            <a-button
+              @click="reSelect"
+              v-show="reSelectBoolean && !appendBoolean"
               >重新选择</a-button
             >
           </a-form-item>
@@ -89,7 +91,13 @@ import md5 from "js-md5";
 import { message } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons-vue";
 import { Modal } from "ant-design-vue";
-import { createVNode, defineComponent, reactive, ref } from "vue";
+import {
+  createVNode,
+  defineComponent,
+  reactive,
+  ref,
+  getCurrentInstance,
+} from "vue";
 import UpPreProcess from "./UpPreProcess.vue";
 
 const aboutSelect = (formData) => {
@@ -118,7 +126,6 @@ const aboutSelect = (formData) => {
   const selectFolder = (e) => {
     clearFormData();
     videoList.splice(0, videoList.length);
-    console.log("清除");
     reSelectBoolean.value = false;
     appendBoolean.value = false;
     let files = e.target.files;
@@ -130,7 +137,6 @@ const aboutSelect = (formData) => {
     for (let i = 0; i < files.length; i++) {
       if (files[i].type.startsWith("image")) {
         imagecounts += 1;
-        console.log("图片", files[i]);
         formData.append(i, files[i]);
       } else if (files[i].type.startsWith("video")) {
         videocounts += 1;
@@ -140,9 +146,9 @@ const aboutSelect = (formData) => {
       }
       //上传
     }
-    for (let i in videoList) {
-      console.log(videoList[i]);
-    }
+    // for (let i in videoList) {
+    //   console.log(videoList[i]);
+    // }
     if (videocounts !== 0) {
       Modal.confirm({
         title: () => "上传结果",
@@ -152,7 +158,7 @@ const aboutSelect = (formData) => {
             createVNode(
               "p",
               {},
-              `${videocounts}个视频文件需要选择一些帧用来标注，您可以手动选择特定帧，或者默认使用按时间均分取出的10帧`
+              `${videocounts}个视频文件需要选择一些帧用来标注，您需要手动选择特定帧`
             ),
             createVNode(
               "p",
@@ -162,14 +168,12 @@ const aboutSelect = (formData) => {
           ]),
         maskClosable: false,
         okText: () => "手动选择帧",
-        cancelText: () => "自动选择帧",
+        cancelText: () => "忽略视频",
         onOk() {
-          console.log("手动选择去喽");
           //这里不知道为什么this变成undefined了，所以在上面用that保存一下this的值
           visible.value = true;
         },
         onCancel() {
-          console.log("自动选择去喽");
         },
       });
     } else {
@@ -187,7 +191,6 @@ const aboutSelect = (formData) => {
         maskClosable: false,
         okText: () => "确认",
         onOk() {
-          console.log("上传图片成功");
         },
       });
     }
@@ -204,8 +207,7 @@ const aboutSelect = (formData) => {
       let blob = new Blob([arr], { type: "image/png" });
       blob.lastModifiedDate = new Date();
       blob.name = name + ".png";
-      console.log(blob.name)
-      formData.append(name, blob,blob.name);
+      formData.append(name, blob, blob.name);
     }
     message.success("截图已成功保存");
     reSelectBoolean.value = false;
@@ -214,12 +216,10 @@ const aboutSelect = (formData) => {
   };
 
   const handleOk = () => {
-    console.log("手动选择完毕");
     upProcess.value.addScreenShot();
   };
 
   const handleCancel = () => {
-    console.log("手动选择取消");
     reSelectBoolean.value = true;
     visible.value = false;
   };
@@ -239,7 +239,7 @@ const aboutSelect = (formData) => {
   };
 };
 
-const aboutForm = (formData) => {
+const aboutForm = (formData, proxy) => {
   const taskRef = ref(null);
   const taskForm = reactive({
     tags: [],
@@ -250,9 +250,36 @@ const aboutForm = (formData) => {
     taskRef.value
       .validate()
       .then(() => {
-        console.log("values", taskForm);
+        let author = localStorage.getItem("labelLogin")
+        let date = Date.now();
+        var test;
         for (let i of formData.keys()) {
-          console.log("最终图片", formData.get(i));
+          test = formData.get(i);
+          let r = new FileReader();
+          let base64;
+          r.readAsDataURL(test);
+          r.onload = function (e) {
+            base64 = e.target.result;
+            proxy.$axios
+              .post("/api/upload/uploadImg", {b64: base64,taskid: author+date})
+              .then((res) => {
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          };
+        }
+        proxy.$axios.post("/api/upload/createTask",{taskid:author+date,name:taskForm.title,author:author}).then(res=>{
+          message.success("发布成功")
+        }).catch(error=>{
+          error
+        })
+        for(let i of taskForm.tags){
+          proxy.$axios.post("/api/upload/createTag",{taskid:author+date,tag:i}).then(res=>{
+
+          }).catch(error=>{
+            console.log("error")
+          })
         }
       })
       .catch((error) => {
@@ -284,6 +311,7 @@ const aboutForm = (formData) => {
 
 export default defineComponent({
   setup() {
+    let { proxy } = getCurrentInstance();
     const formData = new FormData();
     const {
       reSelect,
@@ -298,8 +326,10 @@ export default defineComponent({
       handleOk,
       handleCancel,
     } = aboutSelect(formData);
-    const { taskForm, taskRef, submitForm, removeTag, addTag } =
-      aboutForm(formData);
+    const { taskForm, taskRef, submitForm, removeTag, addTag } = aboutForm(
+      formData,
+      proxy
+    );
 
     return {
       reSelect,

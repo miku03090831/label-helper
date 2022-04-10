@@ -16,15 +16,18 @@
           <a-input v-model:value="registerForm.username" />
         </a-form-item>
         <a-form-item has-feedback label="密码" name="password">
-          <a-input-password v-model:value="registerForm.password" type="password"/>
+          <a-input-password
+            v-model:value="registerForm.password"
+            type="password"
+          />
         </a-form-item>
         <a-form-item has-feedback label="确认密码" name="checkpass">
           <a-input-password v-model:value="registerForm.checkpass" />
         </a-form-item>
-        <a-form-item :wrapper-col="{span:6,offset:9}">
-          <a-button @click="onRegister">注册并登录</a-button>
+        <a-form-item :wrapper-col="{ span: 6, offset: 11 }">
+          <a-button @click="onRegister">注册</a-button>
         </a-form-item>
-        <a-form-item :wrapper-col="{span:10,offset:12}">
+        <a-form-item :wrapper-col="{ span: 10, offset: 12 }">
           <div class="to-login">
             已有账号？点击
             <router-link to="./login">登录</router-link>
@@ -36,20 +39,35 @@
 </template>
 
 <script>
-import { defineComponent, ref, reactive,toRaw } from "vue";
+import { defineComponent, ref, reactive, toRaw, getCurrentInstance } from "vue";
+import { message } from "ant-design-vue";
 export default defineComponent({
-  methods:{
-    onRegister(){
-      console.log(this.registerRef.value)
-      this.registerRef.validate().then(()=>{
-            console.log('values',toRaw(this.registerForm))
-            this.$router.push("/")
-        }).catch(error=>{
-            console.log('error',error)
+  methods: {
+    onRegister() {
+      this.registerRef
+        .validate()
+        .then(() => {
+          this.proxy.$axios
+            .post("/api/users/register", toRaw(this.registerForm))
+            .then((res) => {
+              if (res.data.state === false) {
+                message.error(res.data.message);
+              } else {
+                message.success("注册成功");
+                this.$router.push("/login");
+              }
+            })
+            .catch(() => {
+              console.log("注册失败");
+            });
         })
-    }
+        .catch((error) => {
+          console.log("error", error);
+        });
+    },
   },
   setup() {
+    let { proxy } = getCurrentInstance();
     const registerRef = ref(null);
     const registerForm = reactive({
       email: "",
@@ -58,61 +76,61 @@ export default defineComponent({
       checkpass: "",
     });
 
-    let checkEmailUnique=async(rule,value)=>{
-        //检查email是否唯一
-        return Promise.resolve()
-    }
-
-    let checkUsernameUnique = async(rule, value) => {
-      //检查username是否唯一
-      return Promise.resolve()
+    let checkEmailUnique = async (rule, value) => {
+      //检查email是否唯一
+      return Promise.resolve();
     };
 
-    let validatePass = async(rule, value) => {
-      if (value.length<6) 
-        return Promise.reject("密码至少要6位");
+    let checkUsernameUnique = async (rule, value) => {
+      //检查username是否唯一
+      return Promise.resolve();
+    };
+
+    let validatePass = async (rule, value) => {
+      if (value.length < 6) return Promise.reject("密码至少要6位");
       else if (registerForm.checkpass !== "") {
         registerRef.value.validateFields("checkpass");
       }
-      return Promise.resolve()
+      return Promise.resolve();
     };
 
-    let validatePass2 = async(rule, value) => {
-      if (value === "") 
-        return Promise.reject("请确认一遍密码");
+    let validatePass2 = async (rule, value) => {
+      if (value === "") return Promise.reject("请确认一遍密码");
       else if (registerForm.password !== value)
-        return Promise.reject("两次密码不一致")
-      return Promise.resolve()
+        return Promise.reject("两次密码不一致");
+      return Promise.resolve();
     };
 
     const rules = {
       email: [
         {
-          required:true,
-          type:"email",
+          required: true,
+          type: "email",
           message: "邮箱格式不正确",
           trigger: "blur",
-        },{
-            validator:checkEmailUnique,
-            trigger:"blur"
-        }
+        },
+        {
+          validator: checkEmailUnique,
+          trigger: "blur",
+        },
       ],
       username: [
         {
-          required:true,
+          required: true,
           type: "string",
-          min:6,
-          max:20,
+          min: 6,
+          max: 20,
           message: "用户名长度应为6~20个字符",
           trigger: "blur",
-        },{
-            validator:checkUsernameUnique,
-            trigger:"blur"
-        }
+        },
+        {
+          validator: checkUsernameUnique,
+          trigger: "blur",
+        },
       ],
       password: [
         {
-          required:true,
+          required: true,
           validator: validatePass,
           trigger: "change",
         },
@@ -120,7 +138,7 @@ export default defineComponent({
       checkpass: [
         {
           validator: validatePass2,
-          trigger: ["blur","change"],
+          trigger: ["blur", "change"],
         },
       ],
     };
@@ -135,6 +153,7 @@ export default defineComponent({
     // }
 
     return {
+      proxy,
       labelCol: {
         span: 6,
       },
@@ -174,7 +193,7 @@ export default defineComponent({
 .register:deep(label) {
   color: #fff;
 }
-.to-login{
+.to-login {
   text-align: center;
   color: #fff;
 }
